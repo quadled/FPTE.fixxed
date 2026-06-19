@@ -23,15 +23,23 @@ export function Builder({ guildId }: BuilderProps) {
     const [preview, setPreview] = useShowPreview(true);
     const [buildLegacy, setBuildLegacy] = useState(false);
     const { theme } = useThemeContext();
+    
+    // ABSICHERUNG: Fallbacks für das neue Fabric/Oxygen Farbsystem
     const [fgColor, fillerColor] = useMemo(
-        () => [
-            resolveSemanticColor(theme, semanticColors.HEADER_SECONDARY!),
-            resolveSemanticColor(theme, semanticColors.BACKGROUND_ACCENT!)
-        ],
+        () => {
+            const headerSecondary = semanticColors?.HEADER_SECONDARY ?? "header-secondary";
+            const bgAccent = semanticColors?.BACKGROUND_ACCENT ?? "background-accent";
+            
+            return [
+                resolveSemanticColor(theme, headerSecondary) || "#b5bac1",
+                resolveSemanticColor(theme, bgAccent) || "#1e1f22"
+            ];
+        },
         [theme]
     );
+
     const avatarColors = useAvatarColors(
-        UserStore.getCurrentUser()!.getAvatarURL(guildId, 80),
+        UserStore.getCurrentUser()?.getAvatarURL(guildId, 80) || "",
         fillerColor,
         false
     );
@@ -99,7 +107,6 @@ export function Builder({ guildId }: BuilderProps) {
     }
 
     const buttonText = fpteActive && !hasSelection ? "Remove FPTE" : "Apply FPTE";
-
     const applyButtonVisible = hasSelection || fpteActive;
 
     return (
@@ -176,13 +183,6 @@ export function Builder({ guildId }: BuilderProps) {
                     />
                 </View>
             </View>
-           {/* <FormSwitchRow label="FPTE Builder Preview" value={preview} onValueChange={setPreview} />
-            <FormSwitchRow
-                label="Build backwards compatible FPTE"
-                subLabel="Will use more characters"
-                value={buildLegacy}
-                onValueChange={setBuildLegacy}
-            /> */}
         </FormCardSection>
     );
 }
