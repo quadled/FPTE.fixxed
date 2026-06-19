@@ -3,7 +3,8 @@ import React from "react";
 import { FluxDispatcher } from "@lib/flux";
 import { type ProfileEffectConfig, ProfileEffectStore, UserStore } from "@lib/stores";
 import { setPreviewUserId } from "@patches/patchUseProfileTheme";
-import { EffectPickerActionSheet, hideActionSheet, showActionSheet } from "@ui/actionSheets";
+// WICHTIG: Hier importieren wir das FallbackEffectPickerActionSheet statt dem fehlerhaften Original
+import { FallbackEffectPickerActionSheet, hideActionSheet, showActionSheet } from "@ui/actionSheets";
 
 const SHEET_KEY = "__FPTE__";
 
@@ -19,9 +20,10 @@ export function showEffectPicker(
     }
     FluxDispatcher.subscribe("HIDE_ACTION_SHEET", onClose);
 
+    // CRASH-FIX: Wir nutzen das Fallback-Sheet, um den App-Crash im neuen Design zu verhindern
     showActionSheet({
         content: (
-            <EffectPickerActionSheet
+            <FallbackEffectPickerActionSheet
                 effects={ProfileEffectStore.profileEffects}
                 onSelect={effect => {
                     onSelect(effect);
