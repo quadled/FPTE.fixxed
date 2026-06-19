@@ -81,7 +81,6 @@ export const patchUseProfileTheme = (() => {
             (([options]: [UseProfileThemeOptions], profileTheme: ProfileTheme) => {
                 const { user } = options;
                 
-                // Falls profileTheme selbst undefined vom Client kommt
                 if (!profileTheme) {
                     profileTheme = {
                         theme: "dark" as any,
@@ -106,7 +105,6 @@ export const patchUseProfileTheme = (() => {
                     }
                 }
 
-                // Sicheres Zahlen-Fallback für das neue native Design
                 if (profileTheme.primaryColor == null) profileTheme.primaryColor = 2829622;
                 if (profileTheme.secondaryColor == null) profileTheme.secondaryColor = 2829622;
 
@@ -131,7 +129,6 @@ export const patchUseProfileTheme = (() => {
                         return [accentColor, accentColor];
                 }
                 
-                // Crash-Schutz: Verhindert unvollständige Arrays oder undefined-Werte im neuen Design
                 if (!origRet || !Array.isArray(origRet) || origRet[0] == null || origRet[1] == null) {
                     return [2829622, 2829622]; 
                 }
@@ -167,7 +164,8 @@ export const patchUserProfileEditForm = () =>
       }, []);
 
       if (index.length >= 3) {
-        parent.props.children.splice(index[2] + 1, 0, <Builder />);
+        // Hier gefixt: React.createElement statt JSX-Tags verwenden
+        parent.props.children.splice(index[2] + 1, 0, React.createElement(Builder));
       }
     }
 
