@@ -66,9 +66,9 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
     const colors: ItemProps["colors"] = useMemo(() => {
         const isLight = theme === "light";
         return [
-            isLight ? "#f2f3f5" : "#313338", // BACKGROUND_PRIMARY
-            isLight ? "#ffffff" : "#232428", // BACKGROUND_FLOATING
-            "#5865f2"                        // BUTTON_OUTLINE_BRAND_BORDER_ACTIVE (Discord Blurple)
+            isLight ? "#f2f3f5" : "#313338", // BACKGROUND_PRIMARY Ersatz
+            isLight ? "#ffffff" : "#232428", // BACKGROUND_FLOATING Ersatz
+            "#5865f2"                        // Discord Blurple (Brand Border)
         ];
     }, [theme]);
 
@@ -82,12 +82,11 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
         return effectChunks;
     }, [effects]);
 
-    // CRASH-FIX 2: Wir betten das Sheet in ein normales, unkaputtbares ScrollView-Layout ein 
-    // statt das nicht mehr existierende native BottomSheet zu nutzen.
+    // CRASH-FIX 2: Reines View + ScrollView Layout anstelle des alten fehlerhaften BottomSheets
     return (
         <View 
             style={{ 
-                height: windowDimensions.height - safeArea.top - 60, 
+                height: windowDimensions.height - safeArea.top - 120, 
                 backgroundColor: theme === "light" ? "#ffffff" : "#1e1f22",
                 borderTopLeftRadius: 16,
                 borderTopRightRadius: 16,
@@ -100,7 +99,7 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                         flex: 1,
                         flexDirection: "column",
                         alignItems: "center",
-                        paddingBottom: 120
+                        paddingBottom: 20
                     }}
                 >
                     <Text
@@ -202,18 +201,17 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                     </View>
                 </View>
             </ScrollView>
+            
+            {/* Relatives Layout für den Apply Button, passend zur Modal-Steuerung im Builder */}
             <Button
                 text="Apply"
                 textStyle={{ fontSize: 16 }}
                 onPress={() => { onSelect(effects.find(effect => effect.id === selectedId)?.config ?? null); }}
                 style={{
-                    position: "absolute",
-                    right: 0,
-                    bottom: 0,
-                    left: 0,
                     height: 48,
                     marginHorizontal: 36,
-                    marginBottom: Spacing.PX_48,
+                    marginTop: 10,
+                    marginBottom: 10,
                     borderRadius: Radius.round
                 }}
             />
