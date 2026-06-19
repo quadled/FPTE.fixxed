@@ -13,7 +13,7 @@ import { FormCardSection } from "@ui/components/forms";
 
 const UserProfileActionCreators = findByProps("saveProfileChanges");
 
-// CRASH-FIX: Holt den aktuellsten Store für Effekte direkt und dynamisch aus Discord
+// Holt den aktuellsten Store für Effekte live aus dem Speicher
 const ModernProfileEffectStore = findByProps("profileEffects", "getProfileEffectById");
 
 export interface BuilderProps {
@@ -28,16 +28,14 @@ export function Builder({ guildId }: BuilderProps) {
     const [buildLegacy, setBuildLegacy] = useState(false);
     const { theme } = useThemeContext();
     
-    // Lokaler State für das unkaputtbare Modal-Fenster
     const [showEffects, setShowEffects] = useState(false);
     
-    // CRASH-FIX: Direkte Hex-Fallbacks um die fehlerhafte native resolveSemanticColor zu umgehen
     const [fgColor, fillerColor] = useMemo(
         () => {
             const isLight = theme === "light";
             return [
-                isLight ? "#4f5660" : "#b5bac1", // Textfarbe
-                isLight ? "#e3e5e8" : "#1e1f22"  // Hintergrundfarbe
+                isLight ? "#4f5660" : "#b5bac1",
+                isLight ? "#e3e5e8" : "#1e1f22"
             ];
         },
         [theme]
@@ -158,7 +156,6 @@ export function Builder({ guildId }: BuilderProps) {
                     }
                 />
                 
-                {/* Öffnet jetzt sicher das lokale Modal statt Discords kaputtem Sheet-Manager */}
                 <BuilderButton fgColor={fgColor} label="Effect" onPress={() => setShowEffects(true)}>
                     {effect && <StaticEffect effect={effect} style={{ width: "140%", height: "100%" }} />}
                 </BuilderButton>
@@ -192,7 +189,6 @@ export function Builder({ guildId }: BuilderProps) {
                 </View>
             </View>
 
-            {/* Sicheres Modal-Overlay für die Effektauswahl */}
             <Modal
                 visible={showEffects}
                 animationType="slide"
@@ -208,13 +204,16 @@ export function Builder({ guildId }: BuilderProps) {
                             setShowEffects(false);
                         }}
                     />
-                    <Button
-                        text="Cancel"
-                        look={Button.Looks.FILLED}
-                        color={Button.Colors.BRAND}
-                        style={{ marginHorizontal: 36, marginBottom: 20, height: 40 }}
-                        onPress={() => setShowEffects(false)}
-                    />
+                    
+                    <View style={{ backgroundColor: "#1e1f22", paddingHorizontal: 36, paddingBottom: 24, paddingTop: 8 }}>
+                        <Button
+                            text="Cancel"
+                            look={Button.Looks.FILLED}
+                            color={Button.Colors.BRAND}
+                            style={{ height: 44, width: "100%", borderRadius: 8 }}
+                            onPress={() => setShowEffects(false)}
+                        />
+                    </View>
                 </View>
             </Modal>
         </FormCardSection>
