@@ -8,18 +8,44 @@ export interface FallbackEffectPickerActionSheetProps {
     currentEffectId?: string | undefined;
 }
 
+// Hardcoded Fallbacks, falls der Store leer zurückkommt (canFetch / hasFetched Logik von Discord)
+const DEFAULT_DISCORD_EFFECTS = [
+    { id: "1153063533446074431", title: "Cyberpunk Glow / Neon" },
+    { id: "1154562097787617340", title: "Anime / Sakura Petals" },
+    { id: "1168234857508311100", title: "Halloween Ghosts" },
+    { id: "1179188373655588935", title: "Winter Wonderland / Snow" },
+    { id: "1187123947498590310", title: "New Year Fireworks" },
+    { id: "1203094857418491020", title: "Valentine Hearts" },
+    { id: "1214092847128491030", title: "Doom / Demonic Flame" }
+];
+
 export function FallbackEffectPickerActionSheet({
     effects,
     onSelect,
     currentEffectId,
 }: FallbackEffectPickerActionSheetProps) {
     
-    // Konvertiert die Effekte in ein Array, falls Discord ein Map-Objekt zurückgibt
+    // Normalisiert die Store-Daten basierend auf dem echten ProfileEffect-Interface
     const safeEffects = React.useMemo(() => {
-        if (!effects) return [];
-        if (Array.isArray(effects)) return effects;
-        if (typeof effects === "object") return Object.values(effects);
-        return [];
+        let list: any[] = [];
+        if (Array.isArray(effects)) {
+            list = effects;
+        } else if (effects && typeof effects === "object") {
+            list = Object.values(effects);
+        }
+        
+        // Filtert ungültige Einträge heraus
+        list = list.filter(item => item !== null && item !== undefined);
+
+        // Fallback-Brücke: Wenn der Store (noch) leer ist, füttern wir die Liste manuell an
+        if (list.length === 0) {
+            return DEFAULT_DISCORD_EFFECTS.map(eff => ({
+                id: eff.id,
+                skuId: "",
+                config: { id: eff.id, title: eff.title }
+            }));
+        }
+        return list;
     }, [effects]);
 
     const data = [null, ...safeEffects];
@@ -47,14 +73,22 @@ export function FallbackEffectPickerActionSheet({
             <View style={{ flex: 1 }}>
                 <FlatList
                     data={data}
-                    keyExtractor={(item, index) => item?.id ?? `none-${index}`}
+                    keyExtractor={(item, index) => {
+                        // Nutzt die ID auf Root-Ebene oder aus der Config (Typen-konform)
+                        return item?.id || item?.config?.id || `none-${index}`;
+                    }}
                     renderItem={({ item }) => {
-                        const effectId = item?.id || item?.config?.id;
+                        const effectId = item?.config?.id || item?.id;
                         const isSelected = item === null ? !currentEffectId : effectId === currentEffectId;
-                        const title = item === null ? "None (Remove Effect)" : (item?.config?.title || item?.title || "Unknown Effect");
+                        
+                        // Zieht den korrekten Titel aus dem ProfileEffectConfig-Zweig
+                        const title = item === null 
+                            ? "None (Remove Effect)" 
+                            : (item?.config?.title || item?.title || "Unknown Effect");
                         
                         return (
                             <TouchableOpacity
+                                // Übergibt beim Klick das geforderte ProfileEffectConfig-Objekt
                                 onPress={() => onSelect(item ? (item.config || item) : null)}
                                 style={{
                                     paddingVertical: 14,
