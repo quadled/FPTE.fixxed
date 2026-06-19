@@ -3,7 +3,7 @@ import { findByProps } from "@vendetta/metro";
 import React, { useMemo, useState, useEffect } from "react";
 import { View, Text, Modal } from "react-native";
 import { buildFPTE, hasFPTE, stripFPTE } from "@lib/fpte";
-import { type ProfileEffectConfig, ProfileEffectStore, UserStore, UserProfileStore } from "@lib/stores";
+import { type ProfileEffectConfig, UserStore, UserProfileStore } from "@lib/stores";
 import { useAccentColor, usePrimaryColor, useShowPreview } from "@patches/patchUseProfileTheme";
 import { showColorPicker } from "@ui/actionSheets";
 import { FallbackEffectPickerActionSheet } from "@ui/actionSheets/FallbackEffectPickerActionSheet";
@@ -12,6 +12,9 @@ import { BuilderButton, Button, StaticEffect } from "@ui/components";
 import { FormCardSection } from "@ui/components/forms";
 
 const UserProfileActionCreators = findByProps("saveProfileChanges");
+
+// CRASH-FIX: Holt den aktuellsten Store für Effekte direkt und dynamisch aus Discord
+const ModernProfileEffectStore = findByProps("profileEffects", "getProfileEffectById");
 
 export interface BuilderProps {
     guildId?: string | undefined;
@@ -25,15 +28,16 @@ export function Builder({ guildId }: BuilderProps) {
     const [buildLegacy, setBuildLegacy] = useState(false);
     const { theme } = useThemeContext();
     
-    // Lokaler State um den Picker komplett ohne Discords showActionSheet zu öffnen
+    // Lokaler State für das unkaputtbare Modal-Fenster
     const [showEffects, setShowEffects] = useState(false);
     
+    // CRASH-FIX: Direkte Hex-Fallbacks um die fehlerhafte native resolveSemanticColor zu umgehen
     const [fgColor, fillerColor] = useMemo(
         () => {
             const isLight = theme === "light";
             return [
-                isLight ? "#4f5660" : "#b5bac1",
-                isLight ? "#e3e5e8" : "#1e1f22"
+                isLight ? "#4f5660" : "#b5bac1", // Textfarbe
+                isLight ? "#e3e5e8" : "#1e1f22"  // Hintergrundfarbe
             ];
         },
         [theme]
@@ -67,7 +71,9 @@ export function Builder({ guildId }: BuilderProps) {
     function applyFPTE() {
         const currentUser = UserStore.getCurrentUser();
         if (!currentUser) return;
+
         let newBio = bio ?? "";
+
         if (fpteActive && !hasSelection) {
             newBio = stripFPTE(newBio);
             try {
@@ -83,12 +89,15 @@ export function Builder({ guildId }: BuilderProps) {
             }
             return;
         }
+
         if (!fpteString) return;
+
         if (hasFPTE(newBio)) {
             newBio = stripFPTE(newBio);
         }
         if (newBio.length > 0) newBio += " ";
         newBio += fpteString;
+
         try {
             UserProfileActionCreators.saveProfileChanges({
                 ...UserProfileStore.getUserProfile(currentUser.id),
@@ -110,7 +119,13 @@ export function Builder({ guildId }: BuilderProps) {
             title={
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <Text style={{ fontSize: 16, color: "#FFFFFF" }}>FPTE Builder</Text>
-                    <Text style={{ color: fpteActive ? "#4CAF50" : "#F44336", fontSize: 17, marginLeft: 8 }}>
+                    <Text
+                        style={{
+                            color: fpteActive ? "#4CAF50" : "#F44336",
+                            fontSize: 17,
+                            marginLeft: 8,
+                        }}
+                    >
                         {fpteActive ? "Active" : "Inactive"}
                     </Text>
                 </View>
@@ -142,10 +157,19 @@ export function Builder({ guildId }: BuilderProps) {
                         })
                     }
                 />
+                
+                {/* Öffnet jetzt sicher das lokale Modal statt Discords kaputtem Sheet-Manager */}
                 <BuilderButton fgColor={fgColor} label="Effect" onPress={() => setShowEffects(true)}>
                     {effect && <StaticEffect effect={effect} style={{ width: "140%", height: "100%" }} />}
                 </BuilderButton>
-                <View style={{ flexDirection: "column", alignItems: "center", marginLeft: 12 }}>
+                
+                <View
+                    style={{
+                        flexDirection: "column",
+                        alignItems: "center",
+                        marginLeft: 12,
+                    }}
+                >
                     <Button
                         text={buttonText}
                         size={Button.Sizes.SMALL}
@@ -177,7 +201,7 @@ export function Builder({ guildId }: BuilderProps) {
             >
                 <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" }}>
                     <FallbackEffectPickerActionSheet
-                        effects={ProfileEffectStore.profileEffects}
+                        effects={ModernProfileEffectStore?.profileEffects ?? []}
                         currentEffectId={effect?.id}
                         onSelect={(selectedEffect) => {
                             setEffect(selectedEffect);
