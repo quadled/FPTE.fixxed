@@ -1,6 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { FlashList } from "@shopify/flash-list";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
 import type { ProfileEffect, ProfileEffectConfig } from "@lib/stores";
 
 export interface FallbackEffectPickerActionSheetProps {
@@ -15,8 +14,9 @@ export function FallbackEffectPickerActionSheet({
     currentEffectId,
 }: FallbackEffectPickerActionSheetProps) {
     
-    // Wir packen die Option "Kein Effekt" direkt als erstes Element in die Liste
-    const data = [null, ...effects];
+    // Verhindert Abstürze, falls effects nicht existiert
+    const safeEffects = Array.isArray(effects) ? effects : [];
+    const data = [null, ...safeEffects];
 
     return (
         <View style={{ 
@@ -36,16 +36,15 @@ export function FallbackEffectPickerActionSheet({
                 Select Profile Effect
             </Text>
             
-            <FlashList
+            <FlatList
                 data={data}
-                estimatedItemSize={60}
                 keyExtractor={(item, index) => item?.id ?? `none-${index}`}
                 renderItem={({ item }) => {
                     const isSelected = item === null ? !currentEffectId : item.id === currentEffectId;
                     
                     return (
                         <TouchableOpacity
-                            onPress={() => onSelect(item)}
+                            onPress={() => onSelect(item ? item.config : null)}
                             style={{
                                 paddingVertical: 14,
                                 paddingHorizontal: 16,
@@ -62,7 +61,7 @@ export function FallbackEffectPickerActionSheet({
                                 fontSize: 16,
                                 fontWeight: isSelected ? "600" : "400"
                             }}>
-                                {item === null ? "None (Remove Effect)" : item.title}
+                                {item === null ? "None (Remove Effect)" : (item.config?.title ?? "Unknown Effect")}
                             </Text>
                             
                             {isSelected && (
