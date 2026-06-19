@@ -1,12 +1,12 @@
 import { chunk } from "lodash";
 import React, { type ReactNode, useContext, useMemo, useState } from "react";
-import { View, type ViewStyle } from "react-native";
+import { View, ScrollView, type ViewStyle } from "react-native";
 
 import { HapticFeebackTypes, triggerHapticFeedback } from "@lib/haptics";
 import type { ProfileEffect } from "@lib/stores";
-import { BottomSheet, BottomSheetScrollView, type EffectPickerActionSheetProps } from "@ui/actionSheets";
+import { type EffectPickerActionSheetProps } from "@ui/actionSheets";
 import { IMG_NONE } from "@ui/assets";
-import { resolveSemanticColor, semanticColors, useThemeContext } from "@ui/color";
+import { useThemeContext } from "@ui/color";
 import { Button, FlashList, Icon, PressableOpacity, StaticEffect, Text } from "@ui/components";
 import { Radius, SafeAreaContext, Spacing, useWindowDimensions } from "@ui/length";
 
@@ -61,11 +61,16 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
     const [itemSize, setItemSize] = useState(0);
 
     const { theme } = useThemeContext();
-    const colors: ItemProps["colors"] = useMemo(() => [
-        resolveSemanticColor(theme, semanticColors.BACKGROUND_PRIMARY!),
-        resolveSemanticColor(theme, semanticColors.BACKGROUND_FLOATING!),
-        resolveSemanticColor(theme, semanticColors.BUTTON_OUTLINE_BRAND_BORDER_ACTIVE!)
-    ], [theme]);
+    
+    // CRASH-FIX 1: Sichere Hex-Farben statt der abstürzenden resolveSemanticColor-Funktion
+    const colors: ItemProps["colors"] = useMemo(() => {
+        const isLight = theme === "light";
+        return [
+            isLight ? "#f2f3f5" : "#313338", // BACKGROUND_PRIMARY
+            isLight ? "#ffffff" : "#232428", // BACKGROUND_FLOATING
+            "#5865f2"                        // BUTTON_OUTLINE_BRAND_BORDER_ACTIVE (Discord Blurple)
+        ];
+    }, [theme]);
 
     const windowDimensions = useWindowDimensions();
     const safeArea = useContext(SafeAreaContext);
@@ -77,28 +82,31 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
         return effectChunks;
     }, [effects]);
 
+    // CRASH-FIX 2: Wir betten das Sheet in ein normales, unkaputtbares ScrollView-Layout ein 
+    // statt das nicht mehr existierende native BottomSheet zu nutzen.
     return (
-        <BottomSheet
-            transparentHeader={true}
-            scrollable={true}
-            startExpanded={true}
-            startHeight={windowDimensions.height - safeArea.top}
+        <View 
+            style={{ 
+                height: windowDimensions.height - safeArea.top - 60, 
+                backgroundColor: theme === "light" ? "#ffffff" : "#1e1f22",
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                overflow: "hidden"
+            }}
         >
-            <BottomSheetScrollView
-                scrollsToTop={false}
-            >
+            <ScrollView scrollEventThrottle={16} scrollsToTop={false}>
                 <View
                     style={{
                         flex: 1,
                         flexDirection: "column",
                         alignItems: "center",
-                        paddingBottom: 88
+                        paddingBottom: 120
                     }}
                 >
                     <Text
                         variant="redesign/heading-18/bold"
                         color="header-primary"
-                        style={{ margin: Spacing.PX_16 }}
+                        style={{ margin: Spacing.PX_16, color: theme === "light" ? "#060607" : "#f2f3f5" }}
                     >
                         {currentEffectId ? "Change Effect" : "Add Profile Effect"}
                     </Text>
@@ -111,7 +119,7 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                         <Text
                             variant="heading-md/bold"
                             color="header-primary"
-                            style={{ textAlign: "center" }}
+                            style={{ textAlign: "center", color: theme === "light" ? "#060607" : "#f2f3f5" }}
                         >
                             {effects.find(effect => effect.id === selectedId)?.config.title ?? "None"}
                         </Text>
@@ -172,7 +180,7 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                                                     <Text
                                                         variant="text-sm/medium"
                                                         color="header-primary"
-                                                        style={{ marginTop: Spacing.PX_4 }}
+                                                        style={{ marginTop: Spacing.PX_4, color: theme === "light" ? "#313338" : "#dbdee1" }}
                                                     >
                                                         None
                                                     </Text>
@@ -193,7 +201,7 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                         />
                     </View>
                 </View>
-            </BottomSheetScrollView>
+            </ScrollView>
             <Button
                 text="Apply"
                 textStyle={{ fontSize: 16 }}
@@ -209,6 +217,6 @@ export function FallbackEffectPickerActionSheet({ currentEffectId, effects, onSe
                     borderRadius: Radius.round
                 }}
             />
-        </BottomSheet>
+        </View>
     );
 }
