@@ -3,9 +3,9 @@
     "description": "Allows profile theming and the usage of profile effects by hiding the colors and effect ID in your About Me using invisible, zero-width characters",
     "authors": [
         {
-            "name": "verwahlter",
-            "id": "1499427338247606384"
-        },
+            "name": "Quadled",
+            "id": "1015212381619626014"
+        }
     ],
     "main": "src/index.js",
     "vendetta": {
