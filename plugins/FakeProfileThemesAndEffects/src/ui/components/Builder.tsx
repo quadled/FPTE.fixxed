@@ -6,7 +6,7 @@ import { buildFPTE, hasFPTE, stripFPTE } from "@lib/fpte";
 import { type ProfileEffectConfig, UserStore, UserProfileStore } from "@lib/stores";
 import { useAccentColor, usePrimaryColor, useShowPreview } from "@patches/patchUseProfileTheme";
 import { showColorPicker, showEffectPicker } from "@ui/actionSheets";
-import { resolveSemanticColor, semanticColors, useAvatarColors, useThemeContext } from "@ui/color";
+import { useAvatarColors, useThemeContext } from "@ui/color";
 import { BuilderButton, Button, StaticEffect } from "@ui/components";
 import { FormCardSection, FormSwitchRow } from "@ui/components/forms";
 
@@ -24,15 +24,14 @@ export function Builder({ guildId }: BuilderProps) {
     const [buildLegacy, setBuildLegacy] = useState(false);
     const { theme } = useThemeContext();
     
-    // ABSICHERUNG: Fallbacks für das neue Fabric/Oxygen Farbsystem
+    // CRASH-FIX: Wir nutzen direkte Hex-Fallbacks basierend auf dem Theme,
+    // um die fehlerhafte native resolveSemanticColor-Funktion komplett zu umgehen.
     const [fgColor, fillerColor] = useMemo(
         () => {
-            const headerSecondary = semanticColors?.HEADER_SECONDARY ?? "header-secondary";
-            const bgAccent = semanticColors?.BACKGROUND_ACCENT ?? "background-accent";
-            
+            const isLight = theme === "light";
             return [
-                resolveSemanticColor(theme, headerSecondary) || "#b5bac1",
-                resolveSemanticColor(theme, bgAccent) || "#1e1f22"
+                isLight ? "#4f5660" : "#b5bac1", // Textfarbe (Header Secondary Äquivalent)
+                isLight ? "#e3e5e8" : "#1e1f22"  // Hintergrundfarbe (Background Accent Äquivalent)
             ];
         },
         [theme]
